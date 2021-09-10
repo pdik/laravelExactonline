@@ -11,7 +11,9 @@ class ExactSettings extends Model{
      */
     public static function setValue($name, $value)
     {
-        if(config('exact.type') =='one' && ($name != "client_id" || $name != "client_secret" || $name != "webhook_secret")){
+        if(config('exact.type') =='multiuser'){
+         //For future
+        }elseif($name != "client_id" || $name != "client_secret" || $name != "webhook_secret"){
             $s= ExactSettings::where('option_name', $name)->firstOrnew();
             $s->option_name = $name;
             $s->option_value = $value;
@@ -24,11 +26,15 @@ class ExactSettings extends Model{
      * @return mixed
      */
      public static function getValue($key, $default = null){
-        $setting = ExactSettings::where('option_name', '=', $key)->first();
-        if($setting){
-            return $setting->option_value;
-        }
-        //When not in DB get default config value for one connection
-        return config('exact.'.$key.'');
+         if($key != "client_id" || $key != "client_secret" || $key != "webhook_secret"){
+               return config('exact.'.$key.'');
+          }else{
+            $setting = ExactSettings::where('option_name', '=', $key)->first();
+            if($setting){
+                return $setting->option_value;
+            }
+            //When not in DB get default config value for one connection
+            return $default;
+         }
     }
 }
