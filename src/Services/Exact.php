@@ -8,6 +8,7 @@ use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Log;
 use Pdik\laravelExactonline\Exceptions\CouldNotConnectException;
+use Pdik\laravelExactonline\Exceptions\CouldNotFindWebhookException;
 use Pdik\laravelExactonline\Models\ExactSettings;
 use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\Connection;
@@ -57,6 +58,131 @@ class Exact
 
         return $connection;
     }
+
+    /**
+     * Get webhook topic classes
+     * @throws CouldNotFindWebhookException
+     */
+    public static function webhook($topic,$action,$id){
+        //use events so every one could listen to these events and do something by there self
+        switch ($topic){
+            case "Accounts":
+
+                break;
+            case "BankAccounts":
+                //Bankaccount
+                break;
+            case "Contacts":
+                //Contacts
+                break;
+            case "HostingOpportunities":
+                //HostingOpportunities
+                break;
+            case "Opportunities":
+                //Opportunities
+                break;
+            case "QuotationLines":
+                //QuotationLines
+                break;
+            case "Quotations":
+                //Quotations
+                break;
+            case "DocumentAttachments":
+                //DocumentAttachments
+                break;
+            case "Documents":
+                //Documents
+                break;
+            case "GLAccounts":
+                //GLAccounts
+                break;
+            case "JournalStatusList":
+                //JournalStatusList
+                break;
+            case "BankEntries":
+                //BankEntries
+                break;
+            case "BankEntryLines":
+                //BankEntryLines
+                break;
+            case "CashEntries":
+                //CashEntries
+                break;
+            case "CashEntryLines":
+                //CashEntryLines
+                break;
+            case "TransactionLines":
+                //TransactionLines
+                break;
+            case "GeneralJournalEntries":
+                //GeneralJournalEntries
+                break;
+            case "GeneralJournalEntryLines":
+                //GeneralJournalEntryLines
+                break;
+            case "Items":
+                //Items
+                break;
+            case "StockPosition":
+                //StockPosition
+                break;
+            case "MailMessageAttachments":
+                //MailMessageAttachments
+                break;
+            case "MailMessagesSent":
+                //MailMessagesSent
+                break;
+            case "CostTransactions":
+                //CostTransactions
+                break;
+            case "ProjectPlanning":
+                //ProjectPlanning
+                break;
+            case "TimeTransactions":
+                //TimeTransactions
+                break;
+            case "PurchaseEntries":
+                //PurchaseEntries
+                break;
+            case "PurchaseEntryLines":
+                //PurchaseEntryLines
+                break;
+            case "PurchaseOrderLines":
+                //PurchaseOrderLines
+                break;
+            case "PurchaseOrders":
+                //PurchaseOrders
+                break;
+            case "SalesEntries":
+                //SalesEntries
+                break;
+            case "SalesEntryLines":
+                //SalesEntryLines
+                break;
+            case "SalesInvoiceLines":
+                //SalesInvoiceLines
+                break;
+            case "SalesInvoices":
+                //SalesInvoices
+                break;
+            case "GoodsDeliveries":
+                //GoodsDeliveries
+                break;
+            case "GoodsDeliveryLines":
+                //GoodsDeliveryLines
+                break;
+            case "SalesOrderLines":
+                //SalesOrderLines
+                break;
+            case "SalesOrders":
+                //SalesOrders
+                break;
+            default:
+                throw new CouldNotFindWebhookException('Webhook do not exist');
+                break;
+        }
+    }
+
      /**
      * Acquire refresh lock to avoid duplicate calls to exact.
      */

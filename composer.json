@@ -12,7 +12,7 @@
         "illuminate/database": "8.x-dev"
     },
     "require-dev": {
-        "phpunit/phpunit": "9.5.2"
+        "phpunit/phpunit": "9.5.x-dev"
     },
     "license": "MIT",
     "authors": [
@@ -26,5 +26,17 @@
             "role": "Developer"
         }
     ],
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+     "autoload": {
+    "psr-4": {
+      "Pdik\\laravelExactonline\\": "src"
+    },
+     "extra": {
+      "laravel": {
+          "providers": [
+              "Pdik\\laravelExactonline\\ExactOnlineServiceProvider"
+          ]
+      }
+  }
+  }
 }
