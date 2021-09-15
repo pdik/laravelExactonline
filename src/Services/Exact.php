@@ -6,7 +6,10 @@ use DateTime;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Pdik\laravelExactonline\Events\AccountsDeleted;
+use Pdik\laravelExactonline\Events\AccountsUpdated;
 use Pdik\laravelExactonline\Exceptions\CouldNotConnectException;
 use Pdik\laravelExactonline\Exceptions\CouldNotFindWebhookException;
 use Pdik\laravelExactonline\Models\ExactSettings;
@@ -67,7 +70,12 @@ class Exact
         //use events so every one could listen to these events and do something by there self
         switch ($topic){
             case "Accounts":
+                if($action == "Update"){
 
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "BankAccounts":
                 //Bankaccount
