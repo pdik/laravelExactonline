@@ -1,44 +1,49 @@
 {
-    "name": "pdik/laravelExactonline",
-    "description": "Laravel exactonline package",
-    "type": "library",
-    "require": {
-        "php": "^7.4",
-        "picqer/exact-php-client": "^3.31",
-        "illuminate/routing": "8.31.0",
-        "illuminate/support": "8.x-dev",
-          "illuminate/view": "8.x-dev",
-        "illuminate/console": "8.x-dev",
-        "illuminate/database": "8.x-dev",
-        "illuminate/queue": "8.x-dev",
-        "illuminate/events": "8.x-dev"
+  "name": "pdik/laravelexactonline",
+  "description": "Laravel exactonline package",
+  "homepage": "https://github.com/pdik/laravelExactonline",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "pepijn dik",
+      "email": "pepijn@pdik.nl",
+      "homepage": "https://pdik.nl",
+      "role": "Developer"
     },
-    "require-dev": {
-        "phpunit/phpunit": "9.5.x-dev"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "pepijn dik",
-            "email": "pepijn@pdik.nl"
-        },
-        {
-            "name": "Pascal Lieverse",
-            "email": "p.lieverse@brightness-group.com",
-            "role": "Developer"
-        }
-    ],
-    "minimum-stability": "dev",
-     "autoload": {
+    {
+      "name": "Pascal Lieverse",
+      "email": "p.lieverse@brightness-group.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^7.4",
+    "picqer/exact-php-client": "^3.31",
+    "illuminate/routing": "^8.0",
+    "illuminate/support": "^8.0",
+    "illuminate/view": "^8.0",
+    "illuminate/console": "^8.0",
+    "illuminate/database": "^8.0",
+    "illuminate/queue": "^8.0",
+    "illuminate/events": "^8.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "9.5.10"
+  },
+  "minimum-stability": "dev",
+  "autoload": {
     "psr-4": {
       "Pdik\\laravelExactonline\\": "src"
-    },
-     "extra": {
-      "laravel": {
-          "providers": [
-              "Pdik\\laravelExactonline\\ExactOnlineServiceProvider"
-          ]
-      }
-  }
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Pdik\\laravelExactonline\\ExactOnlineServiceProvider"
+      ]
+    }
   }
 }

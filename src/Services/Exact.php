@@ -10,6 +10,24 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Pdik\laravelExactonline\Events\AccountsDeleted;
 use Pdik\laravelExactonline\Events\AccountsUpdated;
+use Pdik\laravelExactonline\Events\BankAccountsDeleted;
+use Pdik\laravelExactonline\Events\BankAccountsUpdated;
+use Pdik\laravelExactonline\Events\ContactsDeleted;
+use Pdik\laravelExactonline\Events\ContactsUpdated;
+use Pdik\laravelExactonline\Events\DocumentAttachmentsDeleted;
+use Pdik\laravelExactonline\Events\DocumentAttachmentsUpdated;
+use Pdik\laravelExactonline\Events\GLAccountsDeleted;
+use Pdik\laravelExactonline\Events\GLAccountsUpdated;
+use Pdik\laravelExactonline\Events\HostingOpportunitiesDeleted;
+use Pdik\laravelExactonline\Events\HostingOpportunitiesUpdated;
+use Pdik\laravelExactonline\Events\JournalStatusListDeleted;
+use Pdik\laravelExactonline\Events\JournalStatusListUpdated;
+use Pdik\laravelExactonline\Events\OpportunitiesDeleted;
+use Pdik\laravelExactonline\Events\OpportunitiesUpdated;
+use Pdik\laravelExactonline\Events\QuotationLinesDeleted;
+use Pdik\laravelExactonline\Events\QuotationLinesUpdated;
+use Pdik\laravelExactonline\Events\QuotationsDeleted;
+use Pdik\laravelExactonline\Events\QuotationsUpdated;
 use Pdik\laravelExactonline\Exceptions\CouldNotConnectException;
 use Pdik\laravelExactonline\Exceptions\CouldNotFindWebhookException;
 use Pdik\laravelExactonline\Models\ExactSettings;
@@ -71,7 +89,6 @@ class Exact
         switch ($topic){
             case "Accounts":
                 if($action == "Update"){
-
                   Event::dispatch(new AccountsUpdated($id, Account::find($id)));
                 }elseif($action == "Delete"){
                   Event::dispatch(new AccountsDeleted($id, Account::find($id)));
@@ -79,111 +96,291 @@ class Exact
                 break;
             case "BankAccounts":
                 //Bankaccount
+                 if($action == "Update"){
+                  Event::dispatch(new BankAccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new BankAccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "Contacts":
                 //Contacts
+                 if($action == "Update"){
+                  Event::dispatch(new ContactsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new ContactsDeleted($id, Account::find($id)));
+                }
                 break;
             case "HostingOpportunities":
                 //HostingOpportunities
+                 if($action == "Update"){
+                  Event::dispatch(new HostingOpportunitiesUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new HostingOpportunitiesDeleted($id, Account::find($id)));
+                }
                 break;
             case "Opportunities":
                 //Opportunities
+                 if($action == "Update"){
+                  Event::dispatch(new OpportunitiesUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new OpportunitiesDeleted($id, Account::find($id)));
+                }
                 break;
             case "QuotationLines":
                 //QuotationLines
+                 if($action == "Update"){
+                  Event::dispatch(new QuotationLinesUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new QuotationLinesDeleted($id, Account::find($id)));
+                }
                 break;
             case "Quotations":
                 //Quotations
+                 if($action == "Update"){
+                  Event::dispatch(new QuotationsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new QuotationsDeleted($id, Account::find($id)));
+                }
                 break;
             case "DocumentAttachments":
                 //DocumentAttachments
+                 if($action == "Update"){
+                  Event::dispatch(new DocumentAttachmentsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new DocumentAttachmentsDeleted($id, Account::find($id)));
+                }
                 break;
             case "Documents":
                 //Documents
+                 if($action == "Update"){
+                  Event::dispatch(new DocumentAttachmentsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new DocumentAttachmentsDeleted($id, Account::find($id)));
+                }
                 break;
             case "GLAccounts":
                 //GLAccounts
+                 if($action == "Update"){
+                  Event::dispatch(new GLAccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new GLAccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "JournalStatusList":
                 //JournalStatusList
+                 if($action == "Update"){
+                  Event::dispatch(new JournalStatusListUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new JournalStatusListDeleted($id, Account::find($id)));
+                }
                 break;
             case "BankEntries":
                 //BankEntries
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "BankEntryLines":
                 //BankEntryLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "CashEntries":
                 //CashEntries
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "CashEntryLines":
                 //CashEntryLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "TransactionLines":
                 //TransactionLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "GeneralJournalEntries":
                 //GeneralJournalEntries
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "GeneralJournalEntryLines":
                 //GeneralJournalEntryLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "Items":
                 //Items
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "StockPosition":
                 //StockPosition
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "MailMessageAttachments":
                 //MailMessageAttachments
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "MailMessagesSent":
                 //MailMessagesSent
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "CostTransactions":
                 //CostTransactions
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "ProjectPlanning":
                 //ProjectPlanning
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "TimeTransactions":
                 //TimeTransactions
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "PurchaseEntries":
                 //PurchaseEntries
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "PurchaseEntryLines":
                 //PurchaseEntryLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "PurchaseOrderLines":
                 //PurchaseOrderLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "PurchaseOrders":
                 //PurchaseOrders
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "SalesEntries":
                 //SalesEntries
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "SalesEntryLines":
                 //SalesEntryLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "SalesInvoiceLines":
                 //SalesInvoiceLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "SalesInvoices":
                 //SalesInvoices
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "GoodsDeliveries":
                 //GoodsDeliveries
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "GoodsDeliveryLines":
                 //GoodsDeliveryLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "SalesOrderLines":
                 //SalesOrderLines
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             case "SalesOrders":
                 //SalesOrders
+                 if($action == "Update"){
+                  Event::dispatch(new AccountsUpdated($id, Account::find($id)));
+                }elseif($action == "Delete"){
+                  Event::dispatch(new AccountsDeleted($id, Account::find($id)));
+                }
                 break;
             default:
                 throw new CouldNotFindWebhookException('Webhook do not exist');

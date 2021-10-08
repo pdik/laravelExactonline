@@ -3,6 +3,8 @@ namespace Pdik\laravelExactonline\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Pdik\laravelExactonline\Services\Exact;
+
 class TransactionLines extends Model
 {
     protected $table = 'transaction_lines';

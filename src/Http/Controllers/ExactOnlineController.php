@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
+use Pdik\laravelExactonline\Models\ExactSalesInvoices;
 use Pdik\laravelExactonline\Services\Exact;
 use Picqer\Financials\Exact\Webhook\Authenticatable;
 
@@ -13,7 +14,7 @@ class ExactOnlineController extends Controller
 {
     public function index()
     {
-        return view('exactonline::index', ['stats'=>     Exact::getStats() ]);
+        return view('exactonline::index', ['stats'=> Exact::getStats() ]);
     }
     public function sync(){
         Artisan::call('exact:sync');
