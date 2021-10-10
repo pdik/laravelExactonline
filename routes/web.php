@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Pdik\src\Http\Controllers\ExactOnlineController;
+use Pdik\LaravelExactOnline\Http\Controllers\ExactOnlineController;
 
     Route::prefix('exactonline')->group(function () {
         Route::group(['middleware' => ['auth']], function () {
