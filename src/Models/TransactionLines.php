@@ -1,9 +1,9 @@
 <?php
-namespace Pdik\laravelExactonline\Models;
+namespace Pdik\src\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Pdik\laravelExactonline\Services\Exact;
+use Pdik\src\Services\Exact;
 
 class TransactionLines extends Model
 {

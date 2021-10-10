@@ -1,5 +1,5 @@
 <?php
-namespace Pdik\laravelExactonline\Models;
+namespace Pdik\src\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

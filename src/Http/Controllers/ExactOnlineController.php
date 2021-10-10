@@ -1,13 +1,13 @@
 <?php
 
-namespace Pdik\laravelExactonline\Http\Controllers;
+namespace Pdik\src\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
-use Pdik\laravelExactonline\Models\ExactSalesInvoices;
-use Pdik\laravelExactonline\Services\Exact;
+use Pdik\src\Models\ExactSalesInvoices;
+use Pdik\src\Services\Exact;
 use Picqer\Financials\Exact\Webhook\Authenticatable;
 
 class ExactOnlineController extends Controller
@@ -26,7 +26,7 @@ class ExactOnlineController extends Controller
 
     /**
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     * @throws \Pdik\laravelExactonline\Exceptions\CouldNotFindWebhookException
+     * @throws \Pdik\src\Exceptions\CouldNotFindWebhookException
      */
     public function handleWebhook(Request $request){
 

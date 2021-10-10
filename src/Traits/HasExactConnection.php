@@ -1,5 +1,5 @@
 <?php
-namespace Pdik\Traits;
+namespace Pdik\src\Traits;
 /**
  * HasExactConnection
  */

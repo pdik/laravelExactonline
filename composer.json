@@ -33,7 +33,7 @@
   "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
-      "Pdik\\laravelExactonline\\": "src"
+      "Pdik\\laravelexactonline\\": "src"
     }
   },
   "config": {
@@ -42,8 +42,11 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Pdik\\laravelExactonline\\ExactOnlineServiceProvider"
-      ]
+        "Pdik\\laravelexactonline\\ExactOnlineServiceProvider"
+      ],
+      "aliases": {
+        "laravelexactonline": "Pdik\\laravelexactonline\\ExactOnlineFacade"
+      }
     }
   }
 }

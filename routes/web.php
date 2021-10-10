@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Pdik\laravelExactonline\Http\Controllers\ExactOnlineController;
-Route::namespace('\Pdik\laravelExactonline\Http\Controllers')->group(function () {
+use Pdik\src\Http\Controllers\ExactOnlineController;
+
     Route::prefix('exactonline')->group(function () {
         Route::group(['middleware' => ['auth']], function () {
             Route::get('settings', [ExactOnlineController::class, 'index'])->name('exact.index');
@@ -11,4 +11,3 @@ Route::namespace('\Pdik\laravelExactonline\Http\Controllers')->group(function ()
             Route::post('sync', [ExactOnlineController::class, 'sync'])->name('exact.sync');
         });
     });
-});

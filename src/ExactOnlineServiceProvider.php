@@ -1,16 +1,12 @@
 <?php
 
-namespace Pdik\laravelExactonline;
+namespace Pdik\laravelexactonline;
 
-use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use Pdik\Console\Commands\SyncExactOnline;
+use Illuminate\Routing\Router;
 
 class ExactOnlineServiceProvider extends ServiceProvider
 {
-    /**
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     */
     public function boot()
     {
 
@@ -42,7 +38,7 @@ class ExactOnlineServiceProvider extends ServiceProvider
 
     private function registerRoutes()
     {
-        //$this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+      //  $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $router = $this->app->make(Router::class);
         $router->group($this->routeConfiguration(), function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
@@ -52,7 +48,7 @@ class ExactOnlineServiceProvider extends ServiceProvider
     private function routeConfiguration(): array
     {
         return [
-            'namespace' => 'Pdik\laravelExactonline\Http\Controllers',
+            'namespace' => 'Pdik\laravelexactonline\Http\Controllers',
             'middleware' => ['web'],
             'as' => 'laravelExactonline::',
         ];
