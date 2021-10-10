@@ -1,9 +1,9 @@
 <?php
-namespace Pdik\src\Console\Commands;
+namespace Pdik\LaravelExactOnline\Console\Commands;
 use Illuminate\Console\Command;
-use Pdik\src\Models\ExactSalesInvoices;
-use Pdik\src\Models\TransactionLines;
-use Pdik\src\Services\Exact;
+use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
+use Pdik\LaravelExactOnline\Models\TransactionLines;
+use Pdik\LaravelExactOnline\Services\Exact;
 
 class SyncExactOnline extends Command
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Pdik\src\Exceptions;
+namespace Pdik\LaravelExactOnline\Exceptions;
 
 use Exception;
 use Throwable;

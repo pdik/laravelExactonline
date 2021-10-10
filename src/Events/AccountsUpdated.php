@@ -1,5 +1,5 @@
 <?php
-namespace Pdik\src\Events;
+namespace Pdik\LaravelExactOnline\Events;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
 

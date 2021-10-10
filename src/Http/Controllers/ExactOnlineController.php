@@ -1,13 +1,13 @@
 <?php
 
-namespace Pdik\src\Http\Controllers;
+namespace Pdik\LaravelExactOnline\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
-use Pdik\src\Models\ExactSalesInvoices;
-use Pdik\src\Services\Exact;
+use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
+use Pdik\LaravelExactOnline\Services\Exact;
 use Picqer\Financials\Exact\Webhook\Authenticatable;
 
 class ExactOnlineController extends Controller

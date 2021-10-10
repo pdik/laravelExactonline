@@ -1,10 +1,10 @@
 <?php
 
-namespace Pdik\laravelexactonline;
+namespace Pdik\LaravelExactOnline;
 
 use Illuminate\Support\Facades\Facade;
 
-class ExactOnlineFacade extends Facade
+class LaravelExactOnlineFacade extends Facade
 {
     /**
      * Get the registered name of the component.

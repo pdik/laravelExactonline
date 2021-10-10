@@ -1,11 +1,11 @@
 <?php
 
-namespace Pdik\laravelexactonline;
+namespace Pdik\LaravelExactOnline;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 
-class ExactOnlineServiceProvider extends ServiceProvider
+class LaravelExactOnlineServiceProvider extends ServiceProvider
 {
     public function boot()
     {

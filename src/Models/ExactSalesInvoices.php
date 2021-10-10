@@ -1,9 +1,9 @@
 <?php
-namespace Pdik\src\Models;
+namespace Pdik\LaravelExactOnline\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Pdik\src\Services\Exact;
+use Pdik\LaravelExactOnline\Services\Exact;
 
 class ExactSalesInvoices extends Model
 {

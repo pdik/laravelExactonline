@@ -1,5 +1,5 @@
 <?php
-namespace Pdik\src\Traits;
+namespace Pdik\LaravelExactOnline\Traits;
 /**
  * HasExactConnection
  */
