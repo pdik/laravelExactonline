@@ -6,7 +6,7 @@ use Picqer\Financials\Exact\Account;
 
 class AccountsDeleted
 {
-    use Dispatchable, SerializesModels;
+     use SerializesModels;
 
     public $account;
 

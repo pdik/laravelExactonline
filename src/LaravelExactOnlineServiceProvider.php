@@ -38,6 +38,7 @@ class LaravelExactOnlineServiceProvider extends ServiceProvider
 
     private function registerRoutes()
     {
+        $this->app->register(RouteServiceProvider::class);
       //  $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $router = $this->app->make(Router::class);
         $router->group($this->routeConfiguration(), function () {

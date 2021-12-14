@@ -1,12 +1,10 @@
 <?php
-
 namespace Pdik\LaravelExactOnline\Events;
-
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Events\Dispatchable;
 use Picqer\Financials\Exact\Account;
 
-class AccountsUpdated
+
+class AccountsCreated
 {
     use SerializesModels;
 
