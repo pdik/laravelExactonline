@@ -1,4 +1,5 @@
 <?php
+
 namespace Pdik\LaravelExactOnline\Services;
 
 use Carbon\Carbon;
@@ -31,6 +32,8 @@ use Pdik\LaravelExactOnline\Events\QuotationLinesDeleted;
 use Pdik\LaravelExactOnline\Events\QuotationLinesUpdated;
 use Pdik\LaravelExactOnline\Events\QuotationsDeleted;
 use Pdik\LaravelExactOnline\Events\QuotationsUpdated;
+use Pdik\LaravelExactOnline\Events\SalesInvoiceDeleted;
+use Pdik\LaravelExactOnline\Events\SalesInvoiceUpdated;
 use Pdik\LaravelExactOnline\Exceptions\CouldNotConnectException;
 use Pdik\LaravelExactOnline\Exceptions\CouldNotFindWebhookException;
 use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
@@ -405,7 +408,7 @@ class Exact
 
         $attachments = $documentAttachment->filter("Document eq guid'".$document->ID."'");
         foreach ($attachments as $invoice_attachment) {
-            if(Str::contains($invoice_attachment->FileName,'PDF')){
+            if (Str::contains($invoice_attachment->FileName, 'PDF')) {
 
                 return $invoice_attachment;
             }
@@ -576,11 +579,51 @@ class Exact
         }
     }
 
+    public function getTopicModel($topic,$key ,$con = null)
+    {
+        $con = null;
+        if (isset($connection)) {
+            $con = $connection;
+        } else {
+            $con = self::connect();
+        }
+        $model_string = "\Picqer\Financials\Exact\\".$topic;
+        $model = new $model_string(self::connect());
+        return $model->filter("ID eq guid'{$key}'")[0];
+    }
+
     /**
      *
      */
-    public function webhook(){
-
+    public function webhook($topic, $action, $key)
+    {
+        $model = $this->getTopicModel($topic,$key);
+        switch ($topic) {
+            case "Accounts":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new AccountsUpdated($model));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new AccountsDeleted($model));
+                }
+                break;
+            case "BankAccounts":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new BankAccountsUpdated($model));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new BankAccountsDeleted($model));
+                }
+                break;
+            case "SalesInvoices":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new SalesInvoiceUpdated($model));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new SalesInvoiceDeleted($model));
+                }
+                break;
+        }
     }
 
     public static function toDateTime($exact)

@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
+use Pdik\LaravelExactOnline\Exceptions\CouldNotFindWebhookException;
 use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
 use Pdik\LaravelExactOnline\Services\Exact;
 use Picqer\Financials\Exact\Webhook\Authenticatable;
@@ -26,7 +27,7 @@ class ExactOnlineController extends Controller
 
     /**
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     * @throws \Pdik\src\Exceptions\CouldNotFindWebhookException
+     * @throws CouldNotFindWebhookException
      */
     public function handleWebhook(Request $request){
 
