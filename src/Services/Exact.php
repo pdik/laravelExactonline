@@ -152,7 +152,7 @@ class Exact
      */
     public static function acquireLock()
     {
-        $lock = Cache::lock('exact-lock', self::$lockTimeout);
+        $lock = Cache::lock(self::$lockKey, self::$lockTimeout);
         // If another thread is currently doing a token request
         if ($lock->get() === false) {
             Logger()->warning('Exact - ('.request()->fullUrl().') exact oauth call is locked. Waiting...');
@@ -183,7 +183,7 @@ class Exact
     {
         Logger()->warning('Exact - ('.request()->fullUrl().') releasing lock on exact oauth call');
         // Unlock the exact-lock
-        Cache::lock('exact-lock')->forceRelease();
+        Cache::lock(self::$lockKey)->forceRelease();
     }
 
     /**
@@ -574,6 +574,13 @@ class Exact
             $subscription->Topic = $topic;
             $subscription->save();
         }
+    }
+
+    /**
+     *
+     */
+    public function webhook(){
+
     }
 
     public static function toDateTime($exact)
