@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use Pdik\LaravelExactOnline\Models\Settings;
+use Pdik\LaravelExactOnline\Traits\PopulatesExactAccountFields;
 use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\Document;
@@ -53,9 +54,9 @@ class Exact
         if (self::exactConfigKeysValid() === false) {
             return $connection;
         }
-        $connection->setRedirectUrl(config('exactonline.RedirectUrl')); // Same as entered online in the App Center
-        $connection->setExactClientId(config('exactonline.ExactClientId'));
-        $connection->setExactClientSecret(config('exactonline.ExactClientSecret'));
+        $connection->setRedirectUrl(config('exact.RedirectUrl')); // Same as entered online in the App Center
+        $connection->setExactClientId(config('exact.ExactClientId'));
+        $connection->setExactClientSecret(config('exact.ExactClientSecret'));
 
         self::setKeys($connection);
         // Set callback to save newly generated tokens
@@ -90,15 +91,45 @@ class Exact
     }
 
     /**
+     * Load the config
+     * @return void
+     */
+    private function loadConfig(Connection $connection)
+    {
+        if (config('exact.type') == "multi") {
+            if (!$this->checkModelUseTrait()) {
+                throw new Exception('Exact base type model does\'t have the PopulatesExactAccountFields triat');
+            }
+            $class = get_class(config('exact.type_model'));
+            $class->ExactAccountFields(); //returns Exact fields
+        } else {
+            $this->setKeys($connection);
+        }
+    }
+
+    public function checkModelUseTrait()
+    {
+        $class = get_class(config('exact.type_model'));
+        $traits = in_array(
+            PopulatesExactAccountFields::class,
+            array_keys((new $class(PopulatesExactAccountFields::class))->getTraits())
+        );
+        if ($traits) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Checks if Keys are set
      * @return bool
      */
     private static function exactConfigKeysValid()
     {
         return
-            !is_null(config('exactonline.RedirectUrl')) &&
-            !is_null(config('exactonline.ExactClientId')) &&
-            !is_null(config('exactonline.ExactClientSecret'));
+            !is_null(config('exact.RedirectUrl')) &&
+            !is_null(config('exact.ExactClientId')) &&
+            !is_null(config('exact.ExactClientSecret'));
     }
 
     public static function setKeys(Connection $connection)
@@ -190,9 +221,9 @@ class Exact
     public static function getLoginUrl()
     {
         $connection = new Connection();
-        $connection->setRedirectUrl(config('exactonline.RedirectUrl')); // Same as entered in the App Center
-        $connection->setExactClientId(config('exactonline.ExactClientId'));
-        $connection->setExactClientSecret(config('exactonline.ExactClientSecret'));
+        $connection->setRedirectUrl(config('exact.RedirectUrl')); // Same as entered in the App Center
+        $connection->setExactClientId(config('exact.ExactClientId'));
+        $connection->setExactClientSecret(config('exact.ExactClientSecret'));
         return $connection->getAuthUrl();
     }
 
@@ -225,7 +256,6 @@ class Exact
             ];
         } catch (Exception $e) {
             report($e);
-            \Log::error($e->getMessage());
             return [
                 'UserName' => '',
                 'dailyLimit' => 0,
