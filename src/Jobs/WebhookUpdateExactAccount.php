@@ -1,17 +1,15 @@
 <?php
 
-namespace Pdik\LaravelExactOnline\Jobs;
+namespace App\Jobs;
 
+use App\Models\Customer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Event;
-use Pdik\LaravelExactOnline\Events\AccountsUpdated;
-use Pdik\LaravelExactOnline\Services\Exact;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Modules\ExactOnline\Entities\Exact;
 
 class WebhookUpdateExactAccount implements ShouldQueue
 {
@@ -37,7 +35,8 @@ class WebhookUpdateExactAccount implements ShouldQueue
     public function handle()
     {
         $account = Exact::GetAccount($this->id);
-        Event::dispatch(new AccountsUpdated($account));
+
+        Customer::saveExactModel($account);
     }
 
 }

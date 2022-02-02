@@ -2,53 +2,30 @@
 
 namespace Pdik\LaravelExactOnline\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use DateTime;
-use Illuminate\Contracts\Cache\Lock;
-use Illuminate\Contracts\Cache\LockProvider;
-use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Pdik\LaravelExactOnline\Events\AccountsDeleted;
-use Pdik\LaravelExactOnline\Events\AccountsUpdated;
-use Pdik\LaravelExactOnline\Events\BankAccountsDeleted;
-use Pdik\LaravelExactOnline\Events\BankAccountsUpdated;
-use Pdik\LaravelExactOnline\Events\ContactsDeleted;
-use Pdik\LaravelExactOnline\Events\ContactsUpdated;
-use Pdik\LaravelExactOnline\Events\DocumentAttachmentsDeleted;
-use Pdik\LaravelExactOnline\Events\DocumentAttachmentsUpdated;
-use Pdik\LaravelExactOnline\Events\GLAccountsDeleted;
-use Pdik\LaravelExactOnline\Events\GLAccountsUpdated;
-use Pdik\LaravelExactOnline\Events\HostingOpportunitiesDeleted;
-use Pdik\LaravelExactOnline\Events\HostingOpportunitiesUpdated;
-use Pdik\LaravelExactOnline\Events\JournalStatusListDeleted;
-use Pdik\LaravelExactOnline\Events\JournalStatusListUpdated;
-use Pdik\LaravelExactOnline\Events\OpportunitiesDeleted;
-use Pdik\LaravelExactOnline\Events\OpportunitiesUpdated;
-use Pdik\LaravelExactOnline\Events\QuotationLinesDeleted;
-use Pdik\LaravelExactOnline\Events\QuotationLinesUpdated;
-use Pdik\LaravelExactOnline\Events\QuotationsDeleted;
-use Pdik\LaravelExactOnline\Events\QuotationsUpdated;
-use Pdik\LaravelExactOnline\Events\SalesInvoiceDeleted;
-use Pdik\LaravelExactOnline\Events\SalesInvoiceUpdated;
-use Pdik\LaravelExactOnline\Exceptions\CouldNotConnectException;
-use Pdik\LaravelExactOnline\Exceptions\CouldNotFindWebhookException;
-use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
-use Pdik\LaravelExactOnline\Models\ExactSettings;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\ValidationException;
+use Pdik\LaravelExactOnline\Models\Settings;
 use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\Document;
 use Picqer\Financials\Exact\DocumentAttachment;
+use Picqer\Financials\Exact\SalesEntry;
+use Picqer\Financials\Exact\Subscription;
+use Picqer\Financials\Exact\SubscriptionLine;
 use Picqer\Financials\Exact\SalesInvoice;
+use Picqer\Financials\Exact\SyncTransactionLine;
 use Picqer\Financials\Exact\WebhookSubscription;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Contracts\Cache\LockProvider;
+use Exception;
 
 class Exact
 {
-    use HasFactory;
-
 
     /** @var string */
     private static $lockKey = 'exactonline.refreshLock';
@@ -73,6 +50,9 @@ class Exact
     {
         $connection = new Connection();
 
+        if (self::exactConfigKeysValid() === false) {
+            return $connection;
+        }
         $connection->setRedirectUrl(config('exactonline.RedirectUrl')); // Same as entered online in the App Center
         $connection->setExactClientId(config('exactonline.ExactClientId'));
         $connection->setExactClientSecret(config('exactonline.ExactClientSecret'));
@@ -80,14 +60,12 @@ class Exact
         self::setKeys($connection);
         // Set callback to save newly generated tokens
         $connection->setTokenUpdateCallback([self::class, 'tokenUpdateCallback']);
-
+        //RefreshAccesTokensCallback
+        $connection->setRefreshAccessTokenCallback([self::class, 'refreshAccessTokenCallback']);
         // Set callbacks for locking/unlocking the token callback. This prevents multiple simultaneous requests
         // from messing up the stored tokens.
         $connection->setAcquireAccessTokenLockCallback([self::class, 'acquireLock']);
         $connection->setAcquireAccessTokenUnlockCallback([self::class, 'releaseLock']);
-
-        //RefreshAccesTokensCallback
-        $connection->setRefreshAccessTokenCallback([self::class, 'refreshAccessTokenCallback']);
 
 
         // Make the client connect and exchange tokens
@@ -107,8 +85,20 @@ class Exact
             report($e);
             throw new Exception('Could not connect to Exact: '.$e->getMessage());
         }
-
+        // Always return a Connection, even if it didn't authenticate successfully
         return $connection;
+    }
+
+    /**
+     * Checks if Keys are set
+     * @return bool
+     */
+    private static function exactConfigKeysValid()
+    {
+        return
+            !is_null(config('exactonline.RedirectUrl')) &&
+            !is_null(config('exactonline.ExactClientId')) &&
+            !is_null(config('exactonline.ExactClientSecret'));
     }
 
     public static function setKeys(Connection $connection)
@@ -200,9 +190,9 @@ class Exact
     public static function getLoginUrl()
     {
         $connection = new Connection();
-        $connection->setRedirectUrl(config('exact.RedirectUrl')); // Same as entered in the App Center
-        $connection->setExactClientId(config('exact.ExactClientId'));
-        $connection->setExactClientSecret(config('exact.ExactClientSecret'));
+        $connection->setRedirectUrl(config('exactonline.RedirectUrl')); // Same as entered in the App Center
+        $connection->setExactClientId(config('exactonline.ExactClientId'));
+        $connection->setExactClientSecret(config('exactonline.ExactClientSecret'));
         return $connection->getAuthUrl();
     }
 
@@ -246,52 +236,57 @@ class Exact
         }
     }
 
-//    public static function create_account($request, $customer = null, Connection $connection = null)
-//    {
-//        //When doining multiple things in the at the same time make sure to use the same connection
-//        $con = null;
-//        if (isset($connection)) {
-//            $con = $connection;
-//        } else {
-//            $con = self::connect();
-//        }
-//        $account = new Account($con);
-//        $account->Name = $request['first_name'].' '.$request['last_name'];
-//        $account->Country = 'NL';
-//        $account->IsSales = 'true';
-//
-//        if (isset($customer->debtornumber)) {
-//            $account->Code = $customer->debtornumber;
-//        } else {
-//            $account->Code = Customer::max('debtornumber') + 1;
-//        }
-//        if (isset($customer)) {
-//            $account->Email = $customer->Detials->where('type', 'Email')->first()->data;
-//            $account->Phone = $customer->Detials->where('type', 'phone')->first()->data;
-//        }
-//        $account->Status = 'C';
-//        if ($request['invoice_same_delivery'] == "1") {
-//            $account->AddressLine1 = $request['adres'];
-//            $account->City = $request['placename'];
-//            $account->Postcode = $request['postalcode'];
-//        } else {
-//            $account->AddressLine1 = $customer->invoice_adres;
-//            $account->City = $customer->invoice_placename;
-//            $account->Postcode = $customer->invoice_postalcode;
-//
-//        }
-//        try {
-//            $account->save();
-//            if (isset($customer)) {
-//                $customer->Exact_ID = $account->ID;
-//                $customer->save();
-//            }
-//            return $account;
-//        } catch (Exception $e) {
-//            $customer->delete();
-//            return redirect(route('exact.authorize'))->withErrors('Exactonine relatie kon niet aangemaakt worden',);
-//        }
-//    }
+
+    public static function create_account($request, $customer = null, Connection $connection = null)
+    {
+        //When doining multiple things in the at the same time make sure to use the same connection
+        $con = null;
+        if (isset($connection)) {
+            $con = $connection;
+        } else {
+            $con = self::connect();
+        }
+        if ($con->needsAuthentication()) {
+            return;
+        }
+
+        $account = new Account($con);
+        $account->Name = $request['first_name'].' '.$request['last_name'];
+        $account->Country = 'NL';
+        $account->IsSales = 'true';
+
+        if (isset($customer->debtornumber)) {
+            $account->Code = $customer->debtornumber;
+        } else {
+            $account->Code = Customer::max('debtornumber') + 1;
+        }
+        if (isset($customer)) {
+            $account->Email = $customer->Detials->where('type', 'Email')->first()->data;
+            $account->Phone = $customer->Detials->where('type', 'phone')->first()->data;
+        }
+        $account->Status = 'C';
+        if ($request['invoice_same_delivery'] == "1") {
+            $account->AddressLine1 = $request['adres'];
+            $account->City = $request['placename'];
+            $account->Postcode = $request['postalcode'];
+        } else {
+            $account->AddressLine1 = $customer->invoice_adres;
+            $account->City = $customer->invoice_placename;
+            $account->Postcode = $customer->invoice_postalcode;
+
+        }
+        try {
+            $account->save();
+            if (isset($customer)) {
+                $customer->Exact_ID = $account->ID;
+                $customer->save();
+            }
+            return $account;
+        } catch (Exception $e) {
+            $customer->delete();
+            return redirect(route('exact.authorize'))->withErrors('Exactonine relatie kon niet aangemaakt worden',);
+        }
+    }
 
     public static function create_subscription($to_id, $request, $lines)
     {
@@ -383,16 +378,11 @@ class Exact
      */
     public static function getSalesInvoice($key): SalesInvoice
     {
+
         $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(self::connect());
         return $salesInvoices->filter("InvoiceID eq guid'{$key}'")[0];
     }
 
-    /**
-     * Download Exact salesinvoice document
-     * @param $salesInvoiceID
-     * @param  null  $connection
-     * @return mixed|void
-     */
     public static function downloadDocument($salesInvoiceID, $connection = null)
     {
         $con = null;
@@ -401,6 +391,10 @@ class Exact
         } else {
             $con = self::connect();
         }
+        if ($con->needsAuthentication()) {
+            return;
+        }
+
         $document = new Document($con);
         //Get first document
         $document = $document->filter("FinancialTransactionEntryID eq guid'{$salesInvoiceID}'")[0];
@@ -408,7 +402,7 @@ class Exact
 
         $attachments = $documentAttachment->filter("Document eq guid'".$document->ID."'");
         foreach ($attachments as $invoice_attachment) {
-            if (Str::contains($invoice_attachment->FileName, 'PDF')) {
+            if (\Str::contains($invoice_attachment->FileName, 'PDF')) {
 
                 return $invoice_attachment;
             }
@@ -533,7 +527,7 @@ class Exact
             $salesInvoice->InvoiceTo = $order->customer->Exact_id;
             $salesInvoice->OrderedBy = $order->customer->Exact_id;
             $salesInvoice->OrderDate = now();
-            $salesInvoice->YourRef = ''.$order->number;
+            $salesInvoice->YourRef = 'Mobox_'.$order->number;
             $salesInvoice->SalesInvoiceLines = $lines;
             $salesInvoice->save();
             //Save Exact invoice local
@@ -561,68 +555,19 @@ class Exact
         foreach ($subscriptions->get() as $subscription) {
             $subscription->delete();
         }
-//
-//        $topics = [
-//            'FinancialTransactions',
-//            'SalesInvoices',
-////        'CostTransactions',
-//            'Documents',
-//            'Accounts'
-//        ];
-        $topics = config('exact.webhook_topics');
+        $topics = [
+            'FinancialTransactions',
+            'SalesInvoices',
+//        'CostTransactions',
+            'Documents',
+            'Accounts'
+        ];
         foreach ($topics as $topic) {
             $subscription = new WebhookSubscription($connection);
             $subscription->deleteSubscriptions();
-            $subscription->CallbackURL = config('app.url').config('exact.webhook_url');
+            $subscription->CallbackURL = config('app.url').'/api/exact/webhook';
             $subscription->Topic = $topic;
             $subscription->save();
-        }
-    }
-
-    public function getTopicModel($topic,$key ,$con = null)
-    {
-        $con = null;
-        if (isset($connection)) {
-            $con = $connection;
-        } else {
-            $con = self::connect();
-        }
-        $model_string = "\Picqer\Financials\Exact\\".$topic;
-        $model = new $model_string(self::connect());
-        return $model->filter("ID eq guid'{$key}'")[0];
-    }
-
-    /**
-     *
-     */
-    public function webhook($topic, $action, $key)
-    {
-        $model = $this->getTopicModel($topic,$key);
-        switch ($topic) {
-            case "Accounts":
-                //Update action will also be fired when a new item is created
-                if ($action == "Update") {
-                    Event::dispatch(new AccountsUpdated($model));
-                } elseif ($action == "Delete") {
-                    Event::dispatch(new AccountsDeleted($model));
-                }
-                break;
-            case "BankAccounts":
-                //Update action will also be fired when a new item is created
-                if ($action == "Update") {
-                    Event::dispatch(new BankAccountsUpdated($model));
-                } elseif ($action == "Delete") {
-                    Event::dispatch(new BankAccountsDeleted($model));
-                }
-                break;
-            case "SalesInvoices":
-                //Update action will also be fired when a new item is created
-                if ($action == "Update") {
-                    Event::dispatch(new SalesInvoiceUpdated($model));
-                } elseif ($action == "Delete") {
-                    Event::dispatch(new SalesInvoiceDeleted($model));
-                }
-                break;
         }
     }
 

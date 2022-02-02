@@ -7,9 +7,8 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Event;
-use Pdik\LaravelExactOnline\Events\AccountsCreated;
 use Pdik\LaravelExactOnline\Services\Exact;
 use Picqer\Financials\Exact\Account;
 
@@ -20,17 +19,26 @@ class CreateExactAccount implements ShouldQueue
     protected $customer;
     protected $data;
 
-    public $tries = 3;
-    public $maxExceptions = 3;
+    public $tries = 5;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct(Customer $customer, $data)
     {
+        $this->customer = $customer;
         $this->data = $data;
+    }
+
+    public function middleware()
+    {
+        return [
+            // If the job fails two times in five minutes, wait five minutes before retrying
+            // If the job fails before the threshold has been reached, wait 0 to 5 minutes before retrying
+            (new ThrottlesExceptions(2, 5))->backoff(rand(0, 5))
+        ];
     }
 
     /**
@@ -40,9 +48,8 @@ class CreateExactAccount implements ShouldQueue
      */
     public function handle()
     {
-         try {
-            Exact::create_account($this->data);
-            Event::dispatch(new AccountsCreated($this->data));
+        try {
+            Exact::create_account($this->data, $this->customer);
         } catch (\Exception $e) {
             throw new \Exception('Exact Create invoice:'.$e->getMessage());
         }

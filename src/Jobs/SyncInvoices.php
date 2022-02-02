@@ -2,7 +2,9 @@
 
 namespace Modules\ExactOnline\Jobs;
 
+use App\Models\Customer;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -10,23 +12,22 @@ use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
 use Modules\ExactOnline\Entities\Exact;
 use Modules\ExactOnline\Entities\ExactSalesInvoices;
+use Picqer\Financials\Exact\Account;
 
-class UpdateExactInvoice implements ShouldQueue
+class SyncInvoices implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 5;
-    protected $id;
-
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($id)
+    public function __construct()
     {
-        $this->id = $id;
+
     }
 
     public function middleware()
@@ -46,10 +47,15 @@ class UpdateExactInvoice implements ShouldQueue
     public function handle()
     {
         try {
-            $salesinvoice = Exact::getSalesInvoice($this->id);
-            ExactSalesInvoices::ExactUpdate($salesinvoice);
+            $connection = Exact::connect();
+            if( $connection->needsAuthentication()){
+               return;
+            }
+            foreach (Exact::getSalesInvoices($connection) as $invoice) {
+                ExactSalesInvoices::ExactUpdate($invoice);
+            }
         } catch (\Exception $e) {
-            throw new \Exception('Exact Update Invoice:'.$e->getMessage());
+            throw new \Exception('Exact register webhook:'.$e->getMessage());
         }
 
     }
