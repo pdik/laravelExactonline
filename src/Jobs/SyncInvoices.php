@@ -1,8 +1,7 @@
 <?php
 
-namespace Modules\ExactOnline\Jobs;
+namespace Pdik\LaravelExactOnline\Jobs;
 
-use App\Models\Customer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,15 +9,16 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
-use Modules\ExactOnline\Entities\Exact;
-use Modules\ExactOnline\Entities\ExactSalesInvoices;
+
+use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
+use Pdik\LaravelExactOnline\Services\Exact;
 use Picqer\Financials\Exact\Account;
 
 class SyncInvoices implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 5;
+    public int $tries = 5;
 
     /**
      * Create a new job instance.
@@ -30,6 +30,9 @@ class SyncInvoices implements ShouldQueue
 
     }
 
+    /**
+     * @return array
+     */
     public function middleware()
     {
         return [
@@ -43,6 +46,7 @@ class SyncInvoices implements ShouldQueue
      * Execute the job.
      *
      * @return void
+     * @throws \Exception
      */
     public function handle()
     {
@@ -55,9 +59,8 @@ class SyncInvoices implements ShouldQueue
                 ExactSalesInvoices::ExactUpdate($invoice);
             }
         } catch (\Exception $e) {
-            throw new \Exception('Exact register webhook:'.$e->getMessage());
+            throw new \Exception('Exact Sync:'.$e->getMessage());
         }
-
     }
 
 }

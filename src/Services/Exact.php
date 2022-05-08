@@ -100,6 +100,7 @@ class Exact
     /**
      * Load the config
      * @return void
+     * @throws Exception
      */
     private function loadConfig(Connection $connection)
     {

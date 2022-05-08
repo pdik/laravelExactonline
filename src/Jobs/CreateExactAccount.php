@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
+use Pdik\LaravelExactOnline\Exceptions\CouldNotConnectException;
 use Pdik\LaravelExactOnline\Services\Exact;
 use Picqer\Financials\Exact\Account;
 
@@ -16,8 +17,7 @@ class CreateExactAccount implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $customer;
-    protected $data;
+    protected array $data;
 
     public $tries = 5;
 
@@ -26,9 +26,8 @@ class CreateExactAccount implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(Customer $customer, $data)
+    public function __construct($data)
     {
-        $this->customer = $customer;
         $this->data = $data;
     }
 
@@ -44,14 +43,17 @@ class CreateExactAccount implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return void
+     * @return Account
+     * @throws \Exception
      */
     public function handle()
     {
         try {
-            Exact::create_account($this->data, $this->customer);
-        } catch (\Exception $e) {
-            throw new \Exception('Exact Create invoice:'.$e->getMessage());
+            $connection = Exact::connect();
+            $account = new Account($connection, $this->data);
+            return $account;
+        } catch (CouldNotConnectException $e) {
+            throw new \Exception('Exact online :'.$e->getMessage());
         }
 
     }

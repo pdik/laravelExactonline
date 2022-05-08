@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\ExactOnline\Jobs;
+namespace Pdik\LaravelExactOnline\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -8,15 +8,14 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
-use Modules\ExactOnline\Entities\Exact;
-use Modules\ExactOnline\Entities\ExactSalesInvoices;
+use Picqer\Financials\Exact\SalesInvoice;
 
 class UpdateExactInvoice implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 5;
-    protected $id;
+    protected SalesInvoice $invoice;
 
 
     /**
@@ -24,9 +23,10 @@ class UpdateExactInvoice implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($id)
+    public function __construct(SalesInvoice $invoice)
     {
-        $this->id = $id;
+        $this->invoice = $invoice;
+
     }
 
     public function middleware()
@@ -42,16 +42,14 @@ class UpdateExactInvoice implements ShouldQueue
      * Execute the job.
      *
      * @return void
+     * @throws \Exception
      */
     public function handle()
     {
         try {
-            $salesinvoice = Exact::getSalesInvoice($this->id);
-            ExactSalesInvoices::ExactUpdate($salesinvoice);
+            $this->invoice->save();
         } catch (\Exception $e) {
             throw new \Exception('Exact Update Invoice:'.$e->getMessage());
         }
-
     }
-
 }

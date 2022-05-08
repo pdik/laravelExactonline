@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\ExactOnline\Jobs;
+namespace Pdik\LaravelExactOnline\Jobs;
 
-use App\Models\Order;
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
-use Modules\ExactOnline\Entities\Exact;
+
 
 class CreateExactInvoice implements ShouldQueue
 {

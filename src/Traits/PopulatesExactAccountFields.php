@@ -4,7 +4,7 @@ use Picqer\Financials\Exact\Account;
 
 Trait PopulatesExactAccountFields
 {
-    public function ExactAccountFields()
+    public function exactCustomerFields()
     {
         return Account::class;
     }

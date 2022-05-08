@@ -1,23 +1,21 @@
 <?php
 
-namespace Modules\ExactOnline\Jobs;
+namespace Pdik\LaravelExactOnline\Jobs;
 
-use App\Models\Customer;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\SerializesModels;
-use Modules\ExactOnline\Entities\Exact;
-use Picqer\Financials\Exact\Account;
+use Pdik\LaravelExactOnline\Services\Exact;
+
 
 class RegisterWebhooks implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 5;
+    public int $tries = 5;
 
     /**
      * Create a new job instance.
