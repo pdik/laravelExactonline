@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * HasExactConnection
  */
-trait ExactRelation{
+trait ExactRelation
+{
 
     /**
      * Get exact Subscription
@@ -22,11 +23,11 @@ trait ExactRelation{
      */
     public function ExactAccountId()
     {
-        if (empty($this->exact_customer_id)) {
-            return $this->createAsExactCustomer()->id;
+        if (empty($this->exact_id)) {
+            return $this->createAsExactCustomer()->exact_id;
         }
 
-        return $this->exact_customer_id;
+        return $this->exact_id;
     }
     /**
      * Create a Exact customer for the billable model.
@@ -41,7 +42,7 @@ trait ExactRelation{
         /** @var CreateExactCustomer $createExactCustomer */
         $createExactCustomer = app()->make(CreateMollieCustomer::class);
         $customer = $createExactCustomer->execute($options);
-        $this->exact_customer_id = $customer->ID;
+        $this->exact_id = $customer->ID;
         $this->save();
         return $customer;
     }

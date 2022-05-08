@@ -6,6 +6,11 @@ Trait PopulatesExactAccountFields
 {
     public function exactCustomerFields()
     {
-        return Account::class;
+        return
+        [
+          'exact_id' =>  $this->exact_id,
+          'name' => $this->name,
+        ];
     }
+
 }

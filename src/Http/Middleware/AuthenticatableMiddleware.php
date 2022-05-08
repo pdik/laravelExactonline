@@ -4,20 +4,24 @@ namespace Pdik\LaravelExactOnline\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Picqer\Financials\Exact\Webhook\Authenticatable;
 
 class AuthenticatableMiddleware
 {
+    use Authenticatable;
+
     public function handle(Request $request, Closure $next)
     {
-        $matches = [];
-        $matched = preg_match('/^{"Content":(.*),"HashCode":"(.*)"}$/', $request->getContent(), $matches);
-        if ($matched === 1 && isset($matches[1]) && isset($matches[2])) {;
-            if(!$matches[2] === strtoupper(hash_hmac('sha256', $matches[1], config('exact.webhook_secret')))){
-                $response = response()->json(null, 401);
-                $response->setContent(null);
-                return $response;
-            }
+        // If the body is empty we assume it's a webhook validation request, we wouldn't do anything just return 200
+        if (empty($request->getContent())) {
+            return response('');
         }
-        return $next($request);
+        if (
+            $this->authenticate($request->getContent(), config('exact-online-client-laravel.webhook_secret'))
+        ) {
+            return $next($request);
+        }
+
+        return abort(403, 'Verification failed.');
     }
 }
