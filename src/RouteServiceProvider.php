@@ -5,7 +5,7 @@ namespace Pdik\LaravelExactOnline;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
-
+use Pdik\LaravelExactOnline\Services\Exact;
 class RouteServiceProvider extends ServiceProvider
 {
 
@@ -61,7 +61,7 @@ class RouteServiceProvider extends ServiceProvider
 
     /**
      * Define the "api" routes for the application.
-     *
+     *  /api/v1/exactonline/
      * These routes are typically stateless.
      *
      * @return void
@@ -69,6 +69,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapApiRoutes()
     {
         Route::prefix('api')
+            ->prefix('v'.Exact::$version.'/exactonline')
             ->middleware('api')
             ->as('laravelExactOnline::')
             ->group(function () {

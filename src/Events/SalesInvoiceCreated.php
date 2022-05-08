@@ -1,18 +1,17 @@
 <?php
+
 namespace Pdik\LaravelExactOnline\Events;
+
 use Illuminate\Queue\SerializesModels;
 use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\SalesInvoice;
 
 
-class SalesInvoiceCreated
+class SalesInvoiceCreated extends BaseEvent
 {
     use SerializesModels;
-
-    public $salesInvoice;
-
-    public function __construct(SalesInvoice $invoice)
+    public function __construct(string $key)
     {
-        $this->salesInvoice = $invoice;
+        parent::__construct($key);
     }
 }

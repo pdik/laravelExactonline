@@ -1,17 +1,18 @@
 <?php
+
 namespace Pdik\LaravelExactOnline\Events;
+
 use Illuminate\Queue\SerializesModels;
 use Picqer\Financials\Exact\Account;
 
 
-class AccountsCreated
+class AccountsCreated extends BaseEvent
 {
     use SerializesModels;
 
-    public $account;
 
-    public function __construct(Account $account)
+    public function __construct(string $key)
     {
-        $this->account = $account;
+        parent::__construct($key);
     }
 }

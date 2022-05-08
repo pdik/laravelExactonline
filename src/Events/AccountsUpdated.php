@@ -6,14 +6,13 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
 use Picqer\Financials\Exact\Account;
 
-class AccountsUpdated
+class AccountsUpdated extends BaseEvent
 {
     use SerializesModels;
 
-    public $account;
 
-    public function __construct(Account $account)
+    public function __construct(string $key)
     {
-        $this->account = $account;
+        parent::__construct($key);
     }
 }

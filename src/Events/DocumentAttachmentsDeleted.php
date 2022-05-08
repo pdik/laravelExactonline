@@ -4,7 +4,13 @@ use Illuminate\Queue\SerializesModels;
 use Picqer\Financials\Exact\Account;
 
 
-class DocumentAttachmentsDeleted
+class DocumentAttachmentsDeleted extends BaseEvent
 {
-  use  SerializesModels;
+    use SerializesModels;
+
+
+    public function __construct(string $key)
+    {
+        parent::__construct($key);
+    }
 }

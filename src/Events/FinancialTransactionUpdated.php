@@ -2,9 +2,10 @@
 namespace Pdik\LaravelExactOnline\Events;
 use Illuminate\Queue\SerializesModels;
 use Picqer\Financials\Exact\Account;
+use Picqer\Financials\Exact\SalesInvoice;
 
 
-class DocumentAttachmentsUpdated extends BaseEvent
+class FinancialTransactionUpdated extends BaseEvent
 {
     use SerializesModels;
 

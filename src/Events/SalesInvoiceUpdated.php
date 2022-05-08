@@ -5,14 +5,13 @@ use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\SalesInvoice;
 
 
-class SalesInvoiceUpdated
+class SalesInvoiceUpdated extends BaseEvent
 {
     use SerializesModels;
 
-    public $salesInvoice;
 
-    public function __construct(SalesInvoice $invoice)
+    public function __construct(string $key)
     {
-        $this->salesInvoice = $invoice;
+        parent::__construct($key);
     }
 }

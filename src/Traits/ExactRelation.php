@@ -8,43 +8,41 @@ use Illuminate\Support\Facades\DB;
 trait ExactRelation{
 
     /**
-     * Get exact connection
+     * Get exact Subscription
      * @return mixed
      */
     public function subscriptions()
     {
         return $this->morphMany(Account::class, 'owner');
     }
-        /**
-     * Retrieve the Mollie customer ID for this model
+    /**
+     * Retrieve the Exact customer ID for this model
      *
      * @return string
      */
     public function ExactAccountId()
     {
-        if (empty($this->Exact_id)) {
+        if (empty($this->exact_customer_id)) {
             return $this->createAsExactCustomer()->id;
         }
 
-        return $this->Exact_id;
+        return $this->exact_customer_id;
     }
-     /**
-     * Create a Mollie customer for the billable model.
+    /**
+     * Create a Exact customer for the billable model.
      *
      * @param array $override_options
      * @return Customer
      */
     public function createAsExactCustomer(array $override_options = [])
     {
-        $options = array_merge($this->mollieCustomerFields(), $override_options);
+        $options = array_merge($this->exactCustomerFields(), $override_options);
 
-        /** @var CreateMollieCustomer $createMollieCustomer */
-        $createMollieCustomer = app()->make(CreateMollieCustomer::class);
-        $customer = $createMollieCustomer->execute($options);
-
-        $this->mollie_customer_id = $customer->id;
+        /** @var CreateExactCustomer $createExactCustomer */
+        $createExactCustomer = app()->make(CreateMollieCustomer::class);
+        $customer = $createExactCustomer->execute($options);
+        $this->exact_customer_id = $customer->ID;
         $this->save();
-
         return $customer;
     }
 }

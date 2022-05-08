@@ -24,10 +24,10 @@ class LaravelExactOnlineServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../config/exact.php' => config_path('exact.php'),
-            ], 'laravelExactonlineConfig');
+            ], 'exact');
 
         }
-        $this->mergeConfigFrom(__DIR__ . '/../config/exact.php', 'laravelExactonline');
+        $this->mergeConfigFrom(__DIR__ . '/../config/exact.php', 'exact');
 
     }
 
@@ -39,11 +39,6 @@ class LaravelExactOnlineServiceProvider extends ServiceProvider
     private function registerRoutes()
     {
         $this->app->register(RouteServiceProvider::class);
-      //  $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
-        $router = $this->app->make(Router::class);
-        $router->group($this->routeConfiguration(), function () {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        });
     }
 
     private function routeConfiguration(): array

@@ -2,50 +2,57 @@
 
 namespace Pdik\LaravelExactOnline\Services;
 
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
 use DateTime;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Validation\ValidationException;
-use Pdik\LaravelExactOnline\Models\Settings;
+use Illuminate\Support\Facades\Event;
+use Pdik\LaravelExactOnline\Events\AccountsDeleted;
+use Pdik\LaravelExactOnline\Events\AccountsUpdated;
+use Pdik\LaravelExactOnline\Events\BankAccountsDeleted;
+use Pdik\LaravelExactOnline\Events\BankAccountsUpdated;
+use Pdik\LaravelExactOnline\Events\FinancialTransactionDeleted;
+use Pdik\LaravelExactOnline\Events\FinancialTransactionUpdated;
+use Pdik\LaravelExactOnline\Events\SalesInvoiceDeleted;
+use Pdik\LaravelExactOnline\Events\SalesInvoiceUpdated;
+use Pdik\LaravelExactOnline\Exceptions\CouldNotConnectException;
+use Pdik\LaravelExactOnline\Models\ExactSalesInvoices;
+use Pdik\LaravelExactOnline\Models\ExactSettings;
 use Pdik\LaravelExactOnline\Traits\PopulatesExactAccountFields;
+use phpDocumentor\Reflection\Types\Boolean;
 use Picqer\Financials\Exact\Account;
 use Picqer\Financials\Exact\Connection;
 use Picqer\Financials\Exact\Document;
 use Picqer\Financials\Exact\DocumentAttachment;
-use Picqer\Financials\Exact\SalesEntry;
 use Picqer\Financials\Exact\Subscription;
 use Picqer\Financials\Exact\SubscriptionLine;
 use Picqer\Financials\Exact\SalesInvoice;
-use Picqer\Financials\Exact\SyncTransactionLine;
 use Picqer\Financials\Exact\WebhookSubscription;
-use Illuminate\Contracts\Cache\Repository;
-use Illuminate\Contracts\Cache\LockProvider;
-use Exception;
 
 class Exact
 {
 
-    /** @var string */
-    private static $lockKey = 'exactonline.refreshLock';
+    public static string $version = 'v1';
 
+    /** @var string */
+    private static string $lockKey = 'exactonline.refreshLock';
     /**
      * @var int $lockTimeout
      * @comment The time (in seconds) the exact-lock will be locked before opening automatically
      */
-    private static $lockTimeout = 300;
+    private static int $lockTimeout = 570; // 9 and 30 seconds before the lock is automatically opened
 
     /**
      * @var int $threadTimeout
      * @comment The time (in seconds) a thread will wait for it's turn to do oauth before failing
      */
-    private static $threadTimeout = 3000;
+    private static int $threadTimeout = 3000;
 
 
     /**
-     * @throws Exception
+     * @throws CouldNotConnectException
      */
     public static function connect(): Connection
     {
@@ -82,9 +89,9 @@ class Exact
             }
 
             $connection->connect();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             report($e);
-            throw new Exception('Could not connect to Exact: '.$e->getMessage());
+            throw new CouldNotConnectException('Could not connect to Exact: '.$e->getMessage());
         }
         // Always return a Connection, even if it didn't authenticate successfully
         return $connection;
@@ -98,15 +105,18 @@ class Exact
     {
         if (config('exact.type') == "multi") {
             if (!$this->checkModelUseTrait()) {
-                throw new Exception('Exact base type model does\'t have the PopulatesExactAccountFields triat');
+                throw new Exception('Exact base type model does\'t have the PopulatesExactAccountFields trait');
             }
             $class = get_class(config('exact.type_model'));
-            $class->ExactAccountFields(); //returns Exact fields
+            $class->exactCustomerFields(); //returns Exact fields
         } else {
             $this->setKeys($connection);
         }
     }
 
+    /**
+     * @return bool
+     */
     public function checkModelUseTrait()
     {
         $class = get_class(config('exact.type_model'));
@@ -132,23 +142,33 @@ class Exact
             !is_null(config('exact.ExactClientSecret'));
     }
 
+    /**
+     * @param  Connection  $connection
+     * @return void
+     */
     public static function setKeys(Connection $connection)
     {
-        if (Settings::getValue('EXACT_AUTHORIZATION_CODE')) {
-            $connection->setAuthorizationCode(Settings::getValue('EXACT_AUTHORIZATION_CODE'));
+        if (ExactSettings::getValue('EXACT_AUTHORIZATION_CODE')) {
+            $connection->setAuthorizationCode(ExactSettings::getValue('EXACT_AUTHORIZATION_CODE'));
         }
 
-        if (Settings::getValue('EXACT_REFRESH_TOKEN')) {
-            $connection->setRefreshToken(Settings::getValue('EXACT_REFRESH_TOKEN'));
+        if (ExactSettings::getValue('EXACT_REFRESH_TOKEN')) {
+            $connection->setRefreshToken(ExactSettings::getValue('EXACT_REFRESH_TOKEN'));
         }
-        if (Settings::getValue('EXACT_ACCESS_TOKEN')) {
-            $connection->setAccessToken(Settings::getValue('EXACT_ACCESS_TOKEN'));
+        if (ExactSettings::getValue('EXACT_ACCESS_TOKEN')) {
+            $connection->setAccessToken(ExactSettings::getValue('EXACT_ACCESS_TOKEN'));
         }
-        if (Settings::getValue('EXACT_EXPIRES_IN')) {
-            $connection->setTokenExpires(Settings::getValue('EXACT_EXPIRES_IN'));
+        if (ExactSettings::getValue('EXACT_EXPIRES_IN')) {
+            $accessToken = $connection->getAccessToken();
+            $tokenExpire = Carbon::parse(($accessToken->created_at)->addSeconds($accessToken->expires_in))->timestamp;
+            $connection->setTokenExpires($tokenExpire);
         }
     }
 
+    /**
+     * @param  Connection  $connection
+     * @return void
+     */
     public static function refreshAccessTokenCallback(Connection $connection)
     {
         self::setKeys($connection);
@@ -166,9 +186,9 @@ class Exact
      */
     public static function tokenUpdateCallback(Connection $connection)
     {
-        Settings::setValue('EXACT_ACCESS_TOKEN', $connection->getAccessToken());
-        Settings::setValue('EXACT_REFRESH_TOKEN', $connection->getRefreshToken());
-        Settings::setValue('EXACT_EXPIRES_IN', $connection->getTokenExpires() - 60);
+        ExactSettings::setValue('EXACT_ACCESS_TOKEN', $connection->getAccessToken());
+        ExactSettings::setValue('EXACT_REFRESH_TOKEN', $connection->getRefreshToken());
+        ExactSettings::setValue('EXACT_EXPIRES_IN', $connection->getTokenExpires() - 60);
     }
 
     /**
@@ -218,7 +238,7 @@ class Exact
      *
      * @since 04/06/2021
      */
-    public static function getLoginUrl()
+    public static function getLoginUrl(): string
     {
         $connection = new Connection();
         $connection->setRedirectUrl(config('exact.RedirectUrl')); // Same as entered in the App Center
@@ -234,13 +254,13 @@ class Exact
      * @return array
      * @since 04/06/2021
      * @author Pascal Lieverse <P.Lieverse@brightness-group.com>
-     *
+     * @author Pepijn dik <pepijn@pdik.nl>
      */
-    public static function getStats()
+    public static function getStats($connection = null)
     {
 
         try {
-            $connection = self::connect();
+            $connection = Exact::switchConnections($connection);
             $account = new \Picqer\Financials\Exact\Me($connection);
             $result = $account->get();
 //          Just get a random thing to receive the limit headers
@@ -267,60 +287,9 @@ class Exact
     }
 
 
-    public static function create_account($request, $customer = null, Connection $connection = null)
+    public static function create_subscription($to_id, $request, $lines,$connection = null)
     {
-        //When doining multiple things in the at the same time make sure to use the same connection
-        $con = null;
-        if (isset($connection)) {
-            $con = $connection;
-        } else {
-            $con = self::connect();
-        }
-        if ($con->needsAuthentication()) {
-            return;
-        }
-
-        $account = new Account($con);
-        $account->Name = $request['first_name'].' '.$request['last_name'];
-        $account->Country = 'NL';
-        $account->IsSales = 'true';
-
-        if (isset($customer->debtornumber)) {
-            $account->Code = $customer->debtornumber;
-        } else {
-            $account->Code = Customer::max('debtornumber') + 1;
-        }
-        if (isset($customer)) {
-            $account->Email = $customer->Detials->where('type', 'Email')->first()->data;
-            $account->Phone = $customer->Detials->where('type', 'phone')->first()->data;
-        }
-        $account->Status = 'C';
-        if ($request['invoice_same_delivery'] == "1") {
-            $account->AddressLine1 = $request['adres'];
-            $account->City = $request['placename'];
-            $account->Postcode = $request['postalcode'];
-        } else {
-            $account->AddressLine1 = $customer->invoice_adres;
-            $account->City = $customer->invoice_placename;
-            $account->Postcode = $customer->invoice_postalcode;
-
-        }
-        try {
-            $account->save();
-            if (isset($customer)) {
-                $customer->Exact_ID = $account->ID;
-                $customer->save();
-            }
-            return $account;
-        } catch (Exception $e) {
-            $customer->delete();
-            return redirect(route('exact.authorize'))->withErrors('Exactonine relatie kon niet aangemaakt worden',);
-        }
-    }
-
-    public static function create_subscription($to_id, $request, $lines)
-    {
-        $sub = new Subscription(self::connect());
+        $sub = new Subscription(Exact::switchConnections($connection));
 
         $sub->Created = now(); //Get current date time
         $sub->InvoiceTo = $to_id; //Subscription to
@@ -340,17 +309,24 @@ class Exact
         return $sub;
     }
 
-    public static function getSubscriptionLines($ID)
+    /**
+     * @throws CouldNotConnectException
+     */
+    public static function getSubscriptionLines($ID,$connection = null)
     {
-        $sublines = new SubscriptionLine(self::connect());
+        $sublines = new SubscriptionLine(Exact::switchConnections($connection));
         return $sublines->filter("EntryID eq Guid'$ID'");
 
     }
 
-    public static function createSubscriptionLine($line, $sub)
+    /**
+     * @throws CouldNotConnectException
+     * @throws \Picqer\Financials\Exact\ApiException
+     */
+    public static function createSubscriptionLine($line, $sub,$connection = null)
     {
         // dd($line);
-        $sub_lines = new SubscriptionLine(self::connect());
+        $sub_lines = new SubscriptionLine(Exact::switchConnections($connection));
         $sub_lines->EntryID = $sub->EntryID;
         $sub_lines->Item = $line['Item'];
         $sub_lines->Discount = $line['Discount'];
@@ -366,11 +342,12 @@ class Exact
      * @return SubscriptionLine
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public static function updateSubScriptionLine($id, $line, $account)
+    public static function updateSubScriptionLine($id, $line, $account, $connection = null)
     {
         //First check if exist
-        $sublines = new SubscriptionLine(self::connect());
-        $salesInvoice = new SalesInvoice(self::connect());
+        $connection =Exact::switchConnections($connection);
+        $sublines = new SubscriptionLine($connection);
+        $salesInvoice = new SalesInvoice($connection);
         $sublines->ID = $id;
         $sublines->Item = $line['Item'];
         $sublines->Discount = $line['Discount'];
@@ -393,10 +370,11 @@ class Exact
      * Get all Openpayments
      * @param $connection
      * @return array
+     * @throws CouldNotConnectException
      */
-    public static function getReceivablesList($connection)
+    public static function getReceivablesList($connection = null)
     {
-        $receiveable = new \Picqer\Financials\Exact\ReceivablesList($connection);
+        $receiveable = new \Picqer\Financials\Exact\ReceivablesList(Exact::switchConnections($connection));
         return $receiveable->filter('', '', '', ['$top' => 1]);
     }
 
@@ -406,21 +384,20 @@ class Exact
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      * @throws Exception
      */
-    public static function getSalesInvoice($key): SalesInvoice
+    public static function getSalesInvoice($key,$connection = null): SalesInvoice
     {
 
-        $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(self::connect());
+        $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(Exact::switchConnections($connection));
         return $salesInvoices->filter("InvoiceID eq guid'{$key}'")[0];
     }
 
+    /**
+     * Download document from Exact
+     * @throws CouldNotConnectException
+     */
     public static function downloadDocument($salesInvoiceID, $connection = null)
     {
-        $con = null;
-        if (isset($connection)) {
-            $con = $connection;
-        } else {
-            $con = self::connect();
-        }
+        $con = Exact::switchConnections($connection);
         if ($con->needsAuthentication()) {
             return;
         }
@@ -433,18 +410,18 @@ class Exact
         $attachments = $documentAttachment->filter("Document eq guid'".$document->ID."'");
         foreach ($attachments as $invoice_attachment) {
             if (\Str::contains($invoice_attachment->FileName, 'PDF')) {
-
                 return $invoice_attachment;
             }
         }
+        return null;
     }
 
     /**
      * @throws Exception
      */
-    public static function getSalesEntrys()
+    public static function getSalesEntrys($connection = null)
     {
-        $salesEntry = new \Picqer\Financials\Exact\SalesEntry(self::connect());
+        $salesEntry = new \Picqer\Financials\Exact\SalesEntry(Exact::switchConnections($connection));
         return $salesEntry->filter('', '', '', ['$top' => 1]);
     }
 
@@ -453,9 +430,9 @@ class Exact
      * @return \Picqer\Financials\Exact\SalesInvoice
      * @throws Exception
      */
-    public static function getSalesInvoiceByNumber($key): SalesInvoice
+    public static function getSalesInvoiceByNumber($key, $connection = null): SalesInvoice
     {
-        $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(self::connect());
+        $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(Exact::switchConnections($connection));
         return $salesInvoices->filter("InvoiceNumber eq int'{$key}'")[0];
     }
 
@@ -463,10 +440,11 @@ class Exact
      * @param $key
      * @return mixed
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws CouldNotConnectException
      */
-    public static function getTransaction($key)
+    public static function getTransaction($key, $connection = null)
     {
-        $transactionline = new \Picqer\Financials\Exact\TransactionLine(self::connect());
+        $transactionline = new \Picqer\Financials\Exact\TransactionLine(Exact::switchConnections($connection));
         try {
             return $transactionline->filter("ID eq guid'{$key}'", '', '', ['$top' => 1]);
         } catch (\Exception $e) {
@@ -480,10 +458,22 @@ class Exact
      * @param $key
      * @return mixed
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws CouldNotConnectException
      */
-    public static function getTransactions()
+    public static function getTransactions($connection = null)
     {
-        $transactionlines = new \Picqer\Financials\Exact\TransactionLine(self::connect());
+        $transactionlines = new \Picqer\Financials\Exact\TransactionLine(Exact::switchConnections($connection));
+        return $transactionlines->filter('', '', '', ['$top' => 1]);
+    }
+
+    /**
+     * @param $key
+     * @return mixed
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException|CouldNotConnectException
+     */
+    public static function getBankEntryLines($connection = null)
+    {
+        $transactionlines = new \Picqer\Financials\Exact\SalesEntryLine(Exact::switchConnections($connection));
         return $transactionlines->filter('', '', '', ['$top' => 1]);
     }
 
@@ -492,28 +482,69 @@ class Exact
      * @return mixed
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public static function getBankEntryLines()
+    public static function getAccount($key, $connection = null)
     {
-        $transactionlines = new \Picqer\Financials\Exact\SalesEntryLine(self::connect());
-        return $transactionlines->filter('', '', '', ['$top' => 1]);
-    }
-
-    /**
-     * @param $key
-     * @return mixed
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     */
-    public static function getAccount($key)
-    {
-        $account = new Account(self::connect());
+        $account = new Account(Exact::switchConnections($connection));
         return $account->filter("ID eq guid'{$key}'")[0];
     }
 
     /**
+     * @param  null  $connection  use connection, when doing multiple calls
      * @return array
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws CouldNotConnectException
      */
     public static function getSalesInvoices($connection = null): array
+    {
+        $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(Exact::switchConnections($connection));
+        return $salesInvoices->get();
+    }
+
+    /**
+     * @param $id
+     * @param  Null  $connection  use when doing multiple calls
+     * @return bool
+     */
+    public static function AccountExist($id, $connection = null): Boolean
+    {
+
+        $account = new Account(Exact::switchConnections($connection));
+        if (!count($account->filter("ID eq guid'{$id}'")) == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param  Null  $connection
+     * @return Connection
+     * @throws CouldNotConnectException
+     */
+    public static function switchConnections($connection = null): Connection
+    {
+        return $connection ?? self::connect();
+    }
+
+    public static function setWebhooks()
+    {
+        $connection = self::connect();
+        //Get all webhooks
+        $subscriptions = new WebhookSubscription($connection);
+
+        //Delete existing webhooks
+        foreach ($subscriptions->get() as $subscription) {
+            $subscription->delete();
+        }
+        $topics = config('exact.webhook_topics');
+        foreach ($topics as $topic) {
+            $webhookSubscription = new WebhookSubscription($connection);
+            $webhookSubscription->deleteSubscriptions();
+            $webhookSubscription->CallbackURL = config('app.url').config('exact.webhook_url');
+            $webhookSubscription->Topic = $topic;
+            $webhookSubscription->save();
+        }
+    }
+
+    public function getTopicModel($topic, $key, $con = null)
     {
         $con = null;
         if (isset($connection)) {
@@ -521,83 +552,49 @@ class Exact
         } else {
             $con = self::connect();
         }
-        $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice($con);
-        return $salesInvoices->get();
+        $model_string = "\Picqer\Financials\Exact\\".$topic;
+        $model = new $model_string(self::connect());
+        return $model->filter("ID eq guid'{$key}'")[0];
     }
 
     /**
-     * Create a Exact online Sales Invoice
-     * @param $customer_id
-     * @param $lines
-     * @param $orderId
-     * @return SalesInvoice
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     * @throws Exception
+     *
      */
-    public static function create_invoice(object $order, array $lines)
+    public function webhook($topic, $action, $key)
     {
-        $connection = self::connect();
-        if (!isset($order->customer->Exact_id)) {
-            $data = [
-                'first_name' => $order->customer->first_name,
-                'last_name' => $order->customer->last_name,
-                'invoice_same_delivery' => '1',
-                'adres' => $order->getDelivery()['adres'],
-                'placename' => $order->getDelivery()['placename'],
-                'postalcode' => $order->getDelivery()['postalcode']
-            ];
-            $account = self::create_account($data, $order->customer, $connection);
-            //Refresh the model so the Exact id is present this time
-            $order->refresh();
-        }
-
-        if (self::AccountExist($order->customer->Exact_id, $connection)) {
-            $salesInvoice = new SalesInvoice($connection);
-            $salesInvoice->Description = 'Periode '.$order->next_invoice->monthName.' '.$order->next_invoice->year;
-            $salesInvoice->InvoiceTo = $order->customer->Exact_id;
-            $salesInvoice->OrderedBy = $order->customer->Exact_id;
-            $salesInvoice->OrderDate = now();
-            $salesInvoice->YourRef = 'Mobox_'.$order->number;
-            $salesInvoice->SalesInvoiceLines = $lines;
-            $salesInvoice->save();
-            //Save Exact invoice local
-            ExactSalesInvoices::ExactUpdate($salesInvoice);
-            return $salesInvoice;
-        } else {
-            throw new Exception('Exact relation does not exist');
-        }
-    }
-
-    public static function AccountExist($id, $connection)
-    {
-        $account = new Account($connection);
-        if (!count($account->filter("ID eq guid'{$id}'")) == 0) {
-            return true;
-        }
-        return false;
-    }
-
-
-    public static function setWebhooks()
-    {
-        $connection = self::connect();
-        $subscriptions = new WebhookSubscription($connection);
-        foreach ($subscriptions->get() as $subscription) {
-            $subscription->delete();
-        }
-        $topics = [
-            'FinancialTransactions',
-            'SalesInvoices',
-//        'CostTransactions',
-            'Documents',
-            'Accounts'
-        ];
-        foreach ($topics as $topic) {
-            $subscription = new WebhookSubscription($connection);
-            $subscription->deleteSubscriptions();
-            $subscription->CallbackURL = config('app.url').'/api/exact/webhook';
-            $subscription->Topic = $topic;
-            $subscription->save();
+        switch ($topic) {
+            case "Accounts":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new AccountsUpdated($key));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new AccountsDeleted($key));
+                }
+                break;
+            case "BankAccounts":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new BankAccountsUpdated($key));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new BankAccountsDeleted($key));
+                }
+                break;
+            case "SalesInvoices":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new SalesInvoiceUpdated($key));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new SalesInvoiceDeleted($key));
+                }
+                break;
+            case "FinancialTransactions":
+                //Update action will also be fired when a new item is created
+                if ($action == "Update") {
+                    Event::dispatch(new FinancialTransactionUpdated($key));
+                } elseif ($action == "Delete") {
+                    Event::dispatch(new FinancialTransactionDeleted($key));
+                }
+                break;
         }
     }
 
