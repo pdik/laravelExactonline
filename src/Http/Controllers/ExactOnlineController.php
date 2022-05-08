@@ -24,31 +24,4 @@ class ExactOnlineController extends Controller
         Exact::setWebhooks();
         return redirect()->route('exact.index')->withStatus(__('Exact online webhooks verbonden'));
     }
-
-    /**
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     * @throws CouldNotFindWebhookException
-     */
-    public function handleWebhook(Request $request){
-
-        if(isset($request->Content)){
-            Log::debug($request->Content);;
-            foreach (config('exact.webhook_topics') as $topic){
-                if($request->Content['Topic'] == $topic){
-                  Exact::webhook($topic,$request->Content['Action'], $request->Content['Key']);
-                }
-            }
-            if($request->Content['Topic'] == 'SalesInvoices') {
-                if ($request->Content['Action'] == "Update") {
-                    $salesinvoice = Exact::getSalesInvoice($request->Content['Key']);
-                    ExactSalesInvoices::ExactUpdate($request->Content['Key'], $salesinvoice);
-                }
-                else if ($request->Content['Action'] == "Delete") {
-                    ExactSalesInvoices::where('invoice_id', '=', $request->Content['Key'])->delete();
-                }
-            }
-
-        }
-
-    }
 }
