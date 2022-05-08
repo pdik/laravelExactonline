@@ -15,7 +15,7 @@
 <div class="content">
     <div class="container-fluid">
         <div class="row">
-            @if($stats['UserName'] == '')
+
                 <div class="col-lg-4 float-right">
                     <div class="exactOnline card card-margin">
                         <div class="exactOnline card-header no-border">
@@ -35,7 +35,7 @@
                                 </div>
 
                                 <div class="widget-49-meeting-action">
-                                    <a href="{{\Modules\ExactOnline\Entities\Exact::getLoginUrl()}}"
+                                    <a href="{{\Pdik\LaravelExactOnline\Services\Exact::getLoginUrl()}}"
                                        type="submit"
                                        class="btn btn-success inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:shadow-outline-indigo focus:border-indigo-700 active:bg-indigo-700 transition duration-150 ease-in-out">
                                         Connect
@@ -45,8 +45,9 @@
                         </div>
                     </div>
                 </div>
-            @endif
-            @if($stats['UserName'] != '')
+
+            @if(isset($stats))
+
                 <div class="col-lg-4 float-right">
                     <div class="exactOnline card card-margin">
                         <div class="exactOnline card-header no-border">
@@ -72,12 +73,14 @@
                                              aria-valuenow="{{ $stats['dailyLimitRemaining'] }}" aria-valuemin="0"
                                              aria-valuemax="{{ $stats['dailyLimit'] }}"></div>
                                     </div>
+                                   Max {{ $stats['dailyLimit'] }} Remain {{ $stats['dailyLimitRemaining'] }}
                                     <h4>Max limit per minuut</h4>
                                     <div class="progress" style="height: 18px;">
                                         <div class="progress-bar" role="progressbar"
                                              style="width: {{$stats['minutelyLimit'] /  $stats['minutelyLimitRemaining']  }}%;"
                                              aria-valuenow="{{ $stats['minutelyLimitRemaining'] }}" aria-valuemin="0"
                                              aria-valuemax="{{ $stats['minutelyLimit'] }}"></div>
+                                         Max {{ $stats['minutelyLimit'] }} Remain {{ $stats['minutelyLimitRemaining'] }}
                                     </div>
 
                                 </div>

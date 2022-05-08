@@ -13,7 +13,7 @@ class ExactSettings extends Model
 
    public static function setValue($name, $value)
     {
-        $s= settings::where('option_name', $name)->firstOrnew();
+        $s= ExactSettings::where('option_name', $name)->firstOrnew();
         $s->option_name = $name;
         $s->option_value = $value;
         $s->save();
@@ -24,7 +24,7 @@ class ExactSettings extends Model
      * @return mixed
      */
      public static function getValue($key, $default = null){
-        $setting = settings::where('option_name', '=', $key)->first();
+        $setting = ExactSettings::where('option_name', '=', $key)->first();
         if($setting){
             return $setting->option_value;
         }

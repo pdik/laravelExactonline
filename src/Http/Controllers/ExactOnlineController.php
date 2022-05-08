@@ -15,10 +15,16 @@ class ExactOnlineController extends Controller
 {
     public function index()
     {
-        return view('exact-online::index', ['stats'=> Exact::getStats() ]);
+        return view('exact-online::index');
     }
 
-    public function setWebhook(){
+    public function test()
+    {
+        return view('exact-online::index', ['stats' => Exact::getStats()]);
+    }
+
+    public function setWebhook()
+    {
         Exact::setWebhooks();
         return redirect()->route('exact.index')->withStatus(__('Exact online webhooks verbonden'));
     }

@@ -61,9 +61,9 @@ class Exact
         if (self::exactConfigKeysValid() === false) {
             return $connection;
         }
-        $connection->setRedirectUrl(config('exact.RedirectUrl')); // Same as entered online in the App Center
-        $connection->setExactClientId(config('exact.ExactClientId'));
-        $connection->setExactClientSecret(config('exact.ExactClientSecret'));
+        $connection->setRedirectUrl(config('exact.callback')); // Same as entered online in the App Center
+        $connection->setExactClientId(config('exact.client_id'));
+        $connection->setExactClientSecret(config('exact.client_secret'));
 
         self::setKeys($connection);
         // Set callback to save newly generated tokens
@@ -97,39 +97,6 @@ class Exact
         return $connection;
     }
 
-    /**
-     * Load the config
-     * @return void
-     * @throws Exception
-     */
-    private function loadConfig(Connection $connection)
-    {
-        if (config('exact.type') == "multi") {
-            if (!$this->checkModelUseTrait()) {
-                throw new Exception('Exact base type model does\'t have the PopulatesExactAccountFields trait');
-            }
-            $class = get_class(config('exact.type_model'));
-            $class->exactCustomerFields(); //returns Exact fields
-        } else {
-            $this->setKeys($connection);
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    public function checkModelUseTrait()
-    {
-        $class = get_class(config('exact.type_model'));
-        $traits = in_array(
-            PopulatesExactAccountFields::class,
-            array_keys((new $class(PopulatesExactAccountFields::class))->getTraits())
-        );
-        if ($traits) {
-            return true;
-        }
-        return false;
-    }
 
     /**
      * Checks if Keys are set
@@ -138,9 +105,9 @@ class Exact
     private static function exactConfigKeysValid()
     {
         return
-            !is_null(config('exact.RedirectUrl')) &&
-            !is_null(config('exact.ExactClientId')) &&
-            !is_null(config('exact.ExactClientSecret'));
+            !is_null(config('exact.callback')) &&
+            !is_null(config('exact.client_id')) &&
+            !is_null(config('exact.client_secret'));
     }
 
     /**
@@ -160,10 +127,9 @@ class Exact
             $connection->setAccessToken(ExactSettings::getValue('EXACT_ACCESS_TOKEN'));
         }
         if (ExactSettings::getValue('EXACT_EXPIRES_IN')) {
-            $accessToken = $connection->getAccessToken();
-            $tokenExpire = Carbon::parse(($accessToken->created_at)->addSeconds($accessToken->expires_in))->timestamp;
-            $connection->setTokenExpires($tokenExpire);
+            $connection->setTokenExpires(ExactSettings::getValue('EXACT_EXPIRES_IN'));
         }
+
     }
 
     /**
@@ -189,7 +155,7 @@ class Exact
     {
         ExactSettings::setValue('EXACT_ACCESS_TOKEN', $connection->getAccessToken());
         ExactSettings::setValue('EXACT_REFRESH_TOKEN', $connection->getRefreshToken());
-        ExactSettings::setValue('EXACT_EXPIRES_IN', $connection->getTokenExpires() - 60);
+        ExactSettings::setValue('EXACT_EXPIRES_IN', $connection->getTokenExpires());
     }
 
     /**
@@ -241,10 +207,11 @@ class Exact
      */
     public static function getLoginUrl(): string
     {
+
         $connection = new Connection();
-        $connection->setRedirectUrl(config('exact.RedirectUrl')); // Same as entered in the App Center
-        $connection->setExactClientId(config('exact.ExactClientId'));
-        $connection->setExactClientSecret(config('exact.ExactClientSecret'));
+        $connection->setRedirectUrl(config('exact.callback')); // Same as entered in the App Center
+        $connection->setExactClientId(config('exact.client_id'));
+        $connection->setExactClientSecret(config('exact.client_secret'));
         return $connection->getAuthUrl();
     }
 
@@ -260,8 +227,9 @@ class Exact
     public static function getStats($connection = null)
     {
 
-        try {
-            $connection = Exact::switchConnections($connection);
+       try {
+        $connection = self::switchConnections($connection);
+//      dd($connection);
             $account = new \Picqer\Financials\Exact\Me($connection);
             $result = $account->get();
 //          Just get a random thing to receive the limit headers
@@ -285,10 +253,11 @@ class Exact
                 'minutelyLimitRemaining' => 0
             ];
         }
+
     }
 
 
-    public static function create_subscription($to_id, $request, $lines,$connection = null)
+    public static function create_subscription($to_id, $request, $lines, $connection = null)
     {
         $sub = new Subscription(Exact::switchConnections($connection));
 
@@ -313,7 +282,7 @@ class Exact
     /**
      * @throws CouldNotConnectException
      */
-    public static function getSubscriptionLines($ID,$connection = null)
+    public static function getSubscriptionLines($ID, $connection = null)
     {
         $sublines = new SubscriptionLine(Exact::switchConnections($connection));
         return $sublines->filter("EntryID eq Guid'$ID'");
@@ -324,7 +293,7 @@ class Exact
      * @throws CouldNotConnectException
      * @throws \Picqer\Financials\Exact\ApiException
      */
-    public static function createSubscriptionLine($line, $sub,$connection = null)
+    public static function createSubscriptionLine($line, $sub, $connection = null)
     {
         // dd($line);
         $sub_lines = new SubscriptionLine(Exact::switchConnections($connection));
@@ -346,7 +315,7 @@ class Exact
     public static function updateSubScriptionLine($id, $line, $account, $connection = null)
     {
         //First check if exist
-        $connection =Exact::switchConnections($connection);
+        $connection = Exact::switchConnections($connection);
         $sublines = new SubscriptionLine($connection);
         $salesInvoice = new SalesInvoice($connection);
         $sublines->ID = $id;
@@ -385,7 +354,7 @@ class Exact
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      * @throws Exception
      */
-    public static function getSalesInvoice($key,$connection = null): SalesInvoice
+    public static function getSalesInvoice($key, $connection = null): SalesInvoice
     {
 
         $salesInvoices = new \Picqer\Financials\Exact\SalesInvoice(Exact::switchConnections($connection));
@@ -522,7 +491,12 @@ class Exact
      */
     public static function switchConnections($connection = null): Connection
     {
-        return $connection ?? self::connect();
+        if ($connection != null) {
+            return $connection;
+        } else {
+            return self::connect();
+        }
+
     }
 
     public static function setWebhooks()
