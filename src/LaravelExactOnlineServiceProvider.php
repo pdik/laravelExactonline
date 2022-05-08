@@ -11,6 +11,7 @@ class LaravelExactOnlineServiceProvider extends ServiceProvider
     {
         $this->registerConfigs();
         $this->registerViews();
+        $this->registerMigrations();
         $this->registerRoutes();
     }
     public function register()
@@ -30,24 +31,19 @@ class LaravelExactOnlineServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/exact.php', 'exact');
 
     }
+    private function registerMigrations()
+	{
+		$this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+	}
 
     private function registerViews()
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'laravelExactonline');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'exact-online');
     }
 
     private function registerRoutes()
     {
         $this->app->register(RouteServiceProvider::class);
-    }
-
-    private function routeConfiguration(): array
-    {
-        return [
-            'namespace' => 'Pdik\laravelexactonline\Http\Controllers',
-            'middleware' => ['web'],
-            'as' => 'laravelExactonline::',
-        ];
     }
 
 }

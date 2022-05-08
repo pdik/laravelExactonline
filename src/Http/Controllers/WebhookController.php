@@ -33,5 +33,6 @@ class WebhookController
         ExactSettings::setValue('EXACT_REFRESH_TOKEN', "");
         ExactSettings::setValue('EXACT_EXPIRES_IN', "");
         Exact::connect();
+        return redirect()->route('exact-online.index');
     }
 }

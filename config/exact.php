@@ -7,8 +7,7 @@ return
 
         'client_id' => env('EXACT_CLIENT_ID', ''),
         'client_secret' => env('EXACT_CLIENT_SECRET', ''),
-        'webhook_secret' => env('EXACT_WEBHOOK', ''),
-
+        'webhook_secret' => env('EXACT_WEBHOOK_SECRET', ''),
         'type' => 'one', //one , multiuser
 
         /**
